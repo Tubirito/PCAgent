@@ -7,10 +7,10 @@ Agente de IA local para otimização e manutenção do Windows, rodando com Olla
 Abra o PowerShell como **Administrador** e cole:
 
 ```powershell
-irm "https://raw.githubusercontent.com/SEU_USUARIO/pcagent/main/install.ps1" | iex
+irm "https://raw.githubusercontent.com/Tubirito/pcagent/main/install.ps1" | iex
 ```
 
-> Substitua `SEU_USUARIO` pelo seu usuário do GitHub.
+> `Tubirito`
 
 ## O que faz
 
