@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PC Agent</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --panel: #0f0f1a;
+    --border: #1e1e33;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --green: #10b981;
+    --red: #ef4444;
+    --yellow: #f59e0b;
+    --user-bg: #1e1433;
+    --agent-bg: #0f1a2e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent2); }
+
+  .status-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: var(--bg);
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+  /* MAIN LAYOUT */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 8px;
+    overflow-y: auto;
+  }
+
+  .sidebar-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .quick-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .quick-btn:hover {
+    border-color: var(--accent);
+    background: #1a0a2e;
+    color: #c4b5fd;
+  }
+
+  .quick-btn .icon { font-size: 16px; }
+
+  /* SYSMON */
+  .sysmon {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .sysmon-title {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .metric {
+    margin-bottom: 8px;
+  }
+
+  .metric-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .metric-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .metric-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  .fill-cpu { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+  .fill-ram { background: linear-gradient(90deg, var(--accent2), var(--green)); }
+  .fill-disk { background: linear-gradient(90deg, var(--yellow), var(--red)); }
+
+  /* CHAT AREA */
+  .chat-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-behavior: smooth;
+  }
+
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-track { background: transparent; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* WELCOME */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 12px;
+    opacity: 0.5;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .welcome-icon { font-size: 48px; }
+  .welcome h2 { font-size: 20px; font-weight: 800; }
+  .welcome p { font-size: 14px; color: var(--muted); max-width: 320px; line-height: 1.6; }
+
+  /* MESSAGES */
+  .message {
+    display: flex;
+    gap: 12px;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .avatar.agent { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+  .avatar.user  { background: var(--border); }
+
+  .bubble {
+    max-width: 70%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .message.agent .bubble {
+    background: var(--agent-bg);
+    border: 1px solid var(--border);
+    border-top-left-radius: 2px;
+  }
+
+  .message.user .bubble {
+    background: var(--user-bg);
+    border: 1px solid #2d1b4e;
+    border-top-right-radius: 2px;
+    color: #c4b5fd;
+  }
+
+  .tool-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent2);
+    background: #0a1f2e;
+    border: 1px solid #0e3044;
+    border-radius: 4px;
+    padding: 2px 7px;
+    margin-bottom: 6px;
+  }
+
+  /* TYPING */
+  .typing .bubble {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 18px;
+  }
+
+  .typing-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    animation: typing 1.2s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* INPUT */
+  .input-area {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  textarea {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    resize: none;
+    max-height: 120px;
+    min-height: 44px;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--muted); }
+
+  .send-btn {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: opacity 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover { opacity: 0.9; transform: scale(1.05); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-text">PC <span>Agent</span></div>
+  </div>
+  <div class="status-bar">
+    <div class="status-pill">
+      <div class="dot" id="dotAgent"></div>
+      <span id="lblAgent">Agente</span>
+    </div>
+    <div class="status-pill">
+      <div class="dot" id="dotOllama"></div>
+      <span id="lblOllama">Ollama</span>
+    </div>
+  </div>
+</header>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="sidebar-title">Ações Rápidas</div>
+
+    <button class="quick-btn" onclick="send('Mostre o estado atual do sistema: CPU, RAM e disco.')">
+      <span class="icon">📊</span> Status do sistema
+    </button>
+    <button class="quick-btn" onclick="send('Liste os processos que estão consumindo mais CPU agora.')">
+      <span class="icon">🔥</span> Processos pesados
+    </button>
+    <button class="quick-btn" onclick="send('Limpe os arquivos temporários do sistema.')">
+      <span class="icon">🧹</span> Limpar temporários
+    </button>
+    <button class="quick-btn" onclick="send('Limpe o cache DNS do sistema.')">
+      <span class="icon">🌐</span> Flush DNS
+    </button>
+    <button class="quick-btn" onclick="send('Liste os programas que iniciam com o Windows.')">
+      <span class="icon">🚀</span> Programas na startup
+    </button>
+    <button class="quick-btn" onclick="send('Execute uma análise completa do PC e me diga o que pode ser otimizado.')">
+      <span class="icon">🔍</span> Análise completa
+    </button>
+    <button class="quick-btn" onclick="send('O que posso fazer para liberar mais espaço no disco C?')">
+      <span class="icon">💾</span> Liberar espaço
+    </button>
+    <button class="quick-btn" onclick="clearChat()">
+      <span class="icon">🗑️</span> Limpar conversa
+    </button>
+
+    <div class="sysmon">
+      <div class="sysmon-title">Monitor</div>
+      <div class="metric">
+        <div class="metric-label"><span>CPU</span><span id="cpuVal">--%</span></div>
+        <div class="metric-bar"><div class="metric-fill fill-cpu" id="cpuBar" style="width:0%"></div></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label"><span>RAM</span><span id="ramVal">--%</span></div>
+        <div class="metric-bar"><div class="metric-fill fill-ram" id="ramBar" style="width:0%"></div></div>
+      </div>
+      <div class="metric">
+        <div class="metric-label"><span>Disco C</span><span id="diskVal">--%</span></div>
+        <div class="metric-bar"><div class="metric-fill fill-disk" id="diskBar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="chat-wrapper">
+    <div class="chat-messages" id="messages">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🤖</div>
+        <h2>PC Agent Online</h2>
+        <p>Use os botões à esquerda ou digite uma pergunta. Posso otimizar seu PC, analisar processos, limpar arquivos e muito mais.</p>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <textarea id="input" placeholder="Pergunte algo ou peça uma tarefa..." rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendInput()}"
+        oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendInput()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE = "http://localhost:5000";
+  let history = [];
+  let busy = false;
+
+  // ---- STATUS CHECK ----
+  async function checkStatus() {
+    try {
+      const r = await fetch(BASE + "/status");
+      const d = await r.json();
+      document.getElementById("dotAgent").className = "dot online";
+      document.getElementById("lblAgent").textContent = "Agente ✓";
+      document.getElementById("dotOllama").className = d.ollama === "online" ? "dot online" : "dot offline";
+      document.getElementById("lblOllama").textContent = d.ollama === "online" ? "Ollama ✓" : "Ollama ✗";
+    } catch {
+      document.getElementById("dotAgent").className = "dot offline";
+      document.getElementById("lblAgent").textContent = "Agente ✗";
+    }
+  }
+
+  // ---- SYSMON ----
+  async function updateSysmon() {
+    try {
+      const r = await fetch(BASE + "/sysinfo");
+      const d = await r.json();
+      document.getElementById("cpuVal").textContent = d.cpu_percent + "%";
+      document.getElementById("cpuBar").style.width = d.cpu_percent + "%";
+      document.getElementById("ramVal").textContent = d.ram_percent + "%";
+      document.getElementById("ramBar").style.width = d.ram_percent + "%";
+      document.getElementById("diskVal").textContent = d.disk_percent + "%";
+      document.getElementById("diskBar").style.width = d.disk_percent + "%";
+    } catch {}
+  }
+
+  // ---- CHAT ----
+  function autoResize(el) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+  }
+
+  function addMessage(role, text, toolUsed) {
+    const welcome = document.getElementById("welcome");
+    if (welcome) welcome.remove();
+
+    const msgs = document.getElementById("messages");
+    const div = document.createElement("div");
+    div.className = `message ${role}`;
+
+    const avatar = document.createElement("div");
+    avatar.className = `avatar ${role}`;
+    avatar.textContent = role === "agent" ? "🤖" : "👤";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+
+    if (role === "agent" && toolUsed) {
+      const badge = document.createElement("div");
+      badge.className = "tool-badge";
+      badge.textContent = "⚡ ferramenta executada";
+      bubble.appendChild(badge);
+      bubble.appendChild(document.createElement("br"));
+    }
+
+    bubble.appendChild(document.createTextNode(text));
+    div.appendChild(avatar);
+    div.appendChild(bubble);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  function addTyping() {
+    const msgs = document.getElementById("messages");
+    const div = document.createElement("div");
+    div.className = "message agent typing";
+    div.id = "typing";
+    div.innerHTML = `
+      <div class="avatar agent">🤖</div>
+      <div class="bubble">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function removeTyping() {
+    const t = document.getElementById("typing");
+    if (t) t.remove();
+  }
+
+  async function send(text) {
+    if (busy || !text.trim()) return;
+    busy = true;
+    document.getElementById("sendBtn").disabled = true;
+
+    addMessage("user", text);
+    addTyping();
+
+    try {
+      const r = await fetch(BASE + "/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history })
+      });
+      const d = await r.json();
+      removeTyping();
+      history = d.history || history;
+      addMessage("agent", d.response || "Sem resposta.", d.tool_used);
+    } catch (e) {
+      removeTyping();
+      addMessage("agent", "❌ Erro ao conectar com o agente. Verifique se o servidor está rodando:\n\npython agente_ia.py");
+    }
+
+    busy = false;
+    document.getElementById("sendBtn").disabled = false;
+  }
+
+  function sendInput() {
+    const input = document.getElementById("input");
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    input.style.height = "auto";
+    send(text);
+  }
+
+  function clearChat() {
+    history = [];
+    const msgs = document.getElementById("messages");
+    msgs.innerHTML = `
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🤖</div>
+        <h2>Conversa limpa</h2>
+        <p>Pronto para novos comandos.</p>
+      </div>`;
+  }
+
+  // Init
+  checkStatus();
+  updateSysmon();
+  setInterval(checkStatus, 10000);
+  setInterval(updateSysmon, 30000);
+</script>
+</body>
+</html>
